@@ -1,0 +1,38 @@
+library(keras)
+library(tensorflow)
+library(RMariaDB)
+
+con <- dbConnect(RMariaDB::MariaDB(),
+                 dbname = "mestrado",
+                 username = "vinilemos",
+                 password = "DZqVWhvn5hpsKm",
+                 host = '144.22.229.245',
+                 # host = "vinilemos.com.br",
+                 port = 3306)
+
+dep_model <- load_model_tf('dep_model2.tf')
+#suic <- readRDS('suic_model.RDS')
+#fel <- readRDS('fel_model.RDS')
+
+
+bs <- readRDS('todas_as_buscas.rds')
+bs <- bs[, c("text", "status_id", "created_at", "is_quote", "is_retweet",
+             "favorite_count", "retweet_count", "quote_count", "reply_count")]
+bs <- as.data.frame(bs)
+
+fel <- read.csv("felicidade.csv")
+fel <- fel[, c("text", "status_id", "created_at", "is_quote", "is_retweet",
+             "favorite_count", "retweet_count", "quote_count", "reply_count")]
+
+dbWriteTable(conn = con, name = "suic", value = bs, overwrite = TRUE)
+dbWriteTable(conn = con, name = "felicidade", value = fel, overwrite = TRUE)
+
+num_words <- 10000
+max_length = 280
+text_vectorization <- layer_text_vectorization(
+  max_tokens = num_words,
+  output_sequence_length = max_length
+)
+
+text_vectorization %>%
+  adapt(dep$text)
