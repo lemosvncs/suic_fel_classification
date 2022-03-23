@@ -49,7 +49,7 @@ model <- keras_model(input, output)
 model %>% compile(
   optimizer = "adam",
   loss = "binary_crossentropy",
-  metrics = list('accuracy', 'precision')
+  metrics = list('accuracy')
 )
 
 history_suic <- model %>% fit(
