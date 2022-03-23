@@ -8,6 +8,7 @@ fel <- read.csv("fel_t.csv")
 # df <- suic[suic$labels == "fel" | suic$labels == "n", ]
 df <- fel
 df <- na.omit(df)
+table(df$class)
 train_id <- sample.int(nrow(df), size = nrow(df) * 0.8)
 
 train <- df[train_id, ]
@@ -53,7 +54,7 @@ model %>% compile(
   metrics = list('accuracy')
 )
 
-history_suic <- model %>% fit(
+history_fel <- model %>% fit(
   train$text,
   as.numeric(train$class == "1"),
   epochs = 1000,

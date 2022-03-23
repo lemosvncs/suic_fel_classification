@@ -6,6 +6,11 @@ library(purrr)
 suic <- read.csv("suic_v2.csv")
 
 df <- suic[suic$labels == "suic" | suic$labels == "n", ]
+table(df$labels)
+s <- sample(x = nrow(df), size = table(df$labels)[2])
+n <- df[s, ]
+suic <- df[df$labels == "suic", ]
+df <- rbind(n, suic)
 
 train_id <- sample.int(nrow(df), size = nrow(df) * 0.8)
 
