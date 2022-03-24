@@ -3,12 +3,15 @@ library(dplyr)
 library(ggplot2)
 library(purrr)
 
-fel <- read.csv("fel_t.csv")
+suic <- read.csv("suic_v2.csv")
 
-# df <- suic[suic$labels == "fel" | suic$labels == "n", ]
-df <- fel
-df <- na.omit(df)
-table(df$class)
+df <- suic[suic$labels == "dep" | suic$labels == "n", ]
+table(df$labels)
+s <- sample(x = nrow(df), size = table(df$labels)[1])
+n <- df[s, ]
+dep <- df[df$labels == "dep", ]
+df <- rbind(n, dep)
+table(df$labels)
 train_id <- sample.int(nrow(df), size = nrow(df) * 0.8)
 
 train <- df[train_id, ]
@@ -17,7 +20,7 @@ test <- df[-train_id, ]
 # 
 
 num_words <- 10000
-max_length <- 280
+max_length = 280
 text_vectorization <- layer_text_vectorization(
   max_tokens = num_words,
   output_sequence_length = max_length
@@ -47,6 +50,7 @@ output <- input %>%
   layer_dense(units = 1, activation = "sigmoid")
 
 model <- keras_model(input, output)
+summary(model)
 
 model %>% compile(
   optimizer = "adam",
@@ -54,19 +58,22 @@ model %>% compile(
   metrics = list('accuracy')
 )
 
-history_fel <- model %>% fit(
+history_dep <- model %>% fit(
   train$text,
-  as.numeric(train$class == "1"),
+  as.numeric(train$labels == "dep"),
   epochs = 1000,
   batch_size = 512,
   validation_split = .2,
   verbose = 2
 )
+#savehistory(history_suic)
+saveRDS(plot(history_dep), "plot_history_dep.RDS")
+write.csv(history_dep, "history_dep.csv")
 
-results <- model %>% evaluate(test$text, as.numeric(test$class == "1"), verbose = 0)
+results <- model %>% evaluate(test$text, as.numeric(test$labels == "dep"), verbose = 0)
 results
 
-save_model_tf(model, "fel_model.tf")
-write.csv(history_fel, "fel_history.csv")
-#saveRDS(history, "fel_history.RDS")
-saveRDS(results, "fel_results.RDS")
+save_model_tf(model, "dep_model3.tf")
+#saveRDS(history, "suic_history.RDS")
+saveRDS(results, "dep_results24.RDS")
+

@@ -11,7 +11,7 @@ s <- sample(x = nrow(df), size = table(df$labels)[2])
 n <- df[s, ]
 suic <- df[df$labels == "suic", ]
 df <- rbind(n, suic)
-
+table(df$labels)
 train_id <- sample.int(nrow(df), size = nrow(df) * 0.8)
 
 train <- df[train_id, ]
@@ -50,6 +50,7 @@ output <- input %>%
   layer_dense(units = 1, activation = "sigmoid")
 
 model <- keras_model(input, output)
+summary(model)
 
 model %>% compile(
   optimizer = "adam",
@@ -65,10 +66,15 @@ history_suic <- model %>% fit(
   validation_split = .2,
   verbose = 2
 )
+#savehistory(history_suic)
+saveRDS(plot(history_suic), "plot_history_suic.RDS")
+write.csv(history_suic, "history_suic.csv")
 
 results <- model %>% evaluate(test$text, as.numeric(test$labels == "suic"), verbose = 0)
 results
 
-save_model_tf(model, "suic_model2.tf")
-saveRDS(history, "suic_history.RDS")
-saveRDS(results, "suic_results.RDS")
+save_model_tf(model, "suic_model3.tf")
+#saveRDS(history, "suic_history.RDS")
+saveRDS(results, "suic_results24.RDS")
+
+# DEP

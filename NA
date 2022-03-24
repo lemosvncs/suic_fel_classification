@@ -1,0 +1,58 @@
+fel_history <- readRDS("D:/Backups/GitHub/FIS/suic_fel_classification/fel_history.RDS")
+View(fel_history)
+function (...)
+.rs.callAs(name, hook, original, ...)
+library(keras)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+suic <- read.csv("suic_v2.csv")
+df <- suic[suic$labels == "suic" | suic$labels == "n", ]
+table(df$labels)
+s <- sample(x = nrow(df), size = table(df$labels)[2])
+n <- df[s, ]
+suic <- df[df$labels == "suic", ]
+df <- rbind(n, suic)
+table(df)
+table(df$labels)
+train_id <- sample.int(nrow(df), size = nrow(df) * 0.8)
+train <- df[train_id, ]
+test <- df[-train_id, ]
+num_words <- 10000
+max_length = 280
+text_vectorization <- layer_text_vectorization(
+max_tokens = num_words,
+output_sequence_length = max_length
+)
+text_vectorization %>%
+adapt(df$text)
+input <- layer_input(shape = c(1), dtype = "string")
+output <- input %>%
+# embeddings %>%
+text_vectorization() %>%
+layer_embedding(input_dim = num_words + 1, output_dim =  16) %>%
+# layer_hub(handle = "https://tfhub.dev/google/LaBSE/2", trainable = FALSE) %>%
+layer_global_average_pooling_1d() %>%
+layer_dense(units = 16, activation = "relu") %>%
+layer_dropout(0.5) %>%
+layer_dense(units = 1, activation = "sigmoid")
+model <- keras_model(input, output)
+plot(model)
+summary(model)
+model %>% compile(
+optimizer = "adam",
+loss = "binary_crossentropy",
+metrics = list('accuracy')
+)
+plot(model)
+history_suic <- model %>% fit(
+train$text,
+as.numeric(train$labels == "suic"),
+epochs = 1000,
+batch_size = 512,
+validation_split = .2,
+verbose = 2
+)
+plot(history_suic)
+savehistory(history_suic, "suic_history")
+savehistory(history_suic)
