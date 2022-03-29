@@ -33,25 +33,73 @@ tt <- td %>%
   anti_join(st) %>%
   anti_join(stop_words, copy = TRUE)
   
+tt[tt$word == "tã£o", ] <- "tão"
+tt[tt$word == "ã¢nimo", ] <- "ânimo"
+tt[tt$word == "ãšnica", ] <- "única"
 
-tt
 count <- tt %>%
   count(word, sort = TRUE) %>%
-  mutate(word = reorder(word, n))
+  mutate(word = reorder(word, n)) %>%
+  bind_tf_idf(word, label, n)
 
 count[count$label == "dep", ] %>%
+  head(15) %>%
   ggplot(aes(n, word)) +
   geom_col() +
+  ylab("Palavras") +
+  xlab("Contagem") +
+  ggtitle("Contagem de palavras relacionadas à depressão") +
   theme_bw()
 
 count[count$label == "suic", ] %>%
-  ggplot(aes(n, word)) +
-  geom_col() +
+  head(15) %>%
+  # arrange(desc(by = n)) %>%
+  ggplot() +
+  geom_col(aes(x = n, y = reorder(word, n))) +
+  ylab("Palavras") +
+  xlab("Contagem") +
+  ggtitle("Contagem de palavras relacionadas à suicídio") +
+  theme_bw()
+
+count[count$label == "fel", ] %>%
+  head(15) %>%
+  ggplot() +
+  geom_col(aes(x = n, y = reorder(word, n))) +
+  ylab("Palavras") +
+  xlab("Contagem") +
+  ggtitle("Contagem de palavras relacionadas ao Bem-estar") +
+  theme_bw()
+
+# TF-IDF
+count
+
+count[count$label == "fel", ] %>%
+  slice_max(tf_idf, n = 10) %>%
+  ggplot() +
+  geom_col(aes(x = tf_idf, y = reorder(word, tf_idf))) +
+  ylab("Palavras") +
+  xlab("tf-idf") +
+  ggtitle("tf-idf de palavras relacionadas ao Bem-estar") +
   theme_bw()
 
 count[count$label == "dep", ] %>%
-  ggplot(aes(n, word)) +
-  geom_col() +
+  #head(10) %>%
+  slice_max(tf_idf, n = 10) %>%
+  #head(10) %>%
+  ggplot() +
+  geom_col(aes(x = tf_idf, y = fct_reorder(word, tf_idf))) +
+  ylab("Palavras") +
+  xlab("tf-idf") +
+  ggtitle("tf-idf de palavras relacionadas à depressão") +
   theme_bw()
 
-
+count[count$label == "suic", ] %>%
+  #head(10) %>%
+  slice_max(tf_idf, n = 10) %>%
+  #head(10) %>%
+  ggplot() +
+  geom_col(aes(x = tf_idf, y = fct_reorder(word, tf_idf))) +
+  ylab("Palavras") +
+  xlab("tf-idf") +
+  ggtitle("tf-idf de palavras relacionadas à suicídio") +
+  theme_bw()
