@@ -11,6 +11,7 @@ td$id <- 1:10000
 
 library(stringi)
 td$text <- stri_replace_all(td$text, "", regex = "<.*?>")
+td$text <- stri_replace_all(td$text, "", regex = "\\d")
 td$text <- stri_trim(td$text)
 td$text <- stri_trans_tolower(td$text)
 
@@ -22,25 +23,48 @@ td <- na.omit(td)
 
 st <- as.data.frame(stopwords("pt"))
 colnames(st) <- 'word'
-st <- rbind(st, "é")
+st <- rbind(st, "é", "�", "�", "�", "j�", "206", "�", "j�", "3", "gt", "gtgt", "t�", "t�o", "tã£o", "pra", "vc",
+            "vo", 'ja')
 # Tdiytable
+
 library(tidyverse)
 tt <- td %>%
   tibble() %>%
-  group_by(label) %>%
+  group_by(id, label) %>%
   unnest_tokens(output = word, input = text,
                 token = "tweets") %>%
   anti_join(st) %>%
   anti_join(stop_words, copy = TRUE)
   
-tt[tt$word == "tã£o", ] <- "tão"
-tt[tt$word == "ã¢nimo", ] <- "ânimo"
-tt[tt$word == "ãšnica", ] <- "única"
+# tt[tt$word == "tã£o", "word"] <- "tão"
+tt[tt$word == "ã¢nimo", "word"] <- "ânimo"
+tt[tt$word == "ãšnica", "word"] <- "única"
+tt[tt$word == "ningu�m", "word"] <- "ninguém"
+tt[tt$word == "n�o", "word"] <- "não"
+tt[tt$word == "n�o", "word"] <- "não"
+tt[tt$word == "emo�oes", "word"] <- 'emoções'
+tt[tt$word == "m�sica", "word"] <- 'música'
+tt[tt$word == "m�sica", "word"] <- 'música'
+tt[tt$word == "�ltima", "word"] <- 'última'
+#tt[tt$word == "t�", "word"] <- "tô"
+#tt[tt$word == "tã", "word"] <- "t�o"
+
+tt$word <- as.character(tt$word)
 
 count <- tt %>%
-  count(word, sort = TRUE) %>%
-  mutate(word = reorder(word, n)) %>%
-  bind_tf_idf(word, label, n)
+  add_count(id, name = "n") %>%
+  # count(word, sort = TRUE) %>%
+  # mutate(word = reorder(word, n)) %>%
+  group_by(id, n) %>%
+  count(word, sort = TRUE)
+
+  bind_tf_idf(term = word, document = label, n = n)
+
+# count <- tt %>%
+#   count(word, sort = TRUE) %>%
+#   mutate(word = reorder(word, n)) %>%
+#   
+#   bind_tf_idf(term = word, document = label, n = n)
 
 count[count$label == "dep", ] %>%
   head(15) %>%
@@ -67,11 +91,11 @@ count[count$label == "fel", ] %>%
   geom_col(aes(x = n, y = reorder(word, n))) +
   ylab("Palavras") +
   xlab("Contagem") +
-  ggtitle("Contagem de palavras relacionadas ao Bem-estar") +
+  ggtitle("Contagem de palavras relacionadas à Bem-estar") +
   theme_bw()
 
 # TF-IDF
-count
+count <- count[count$label == "fel", ] 
 
 count[count$label == "fel", ] %>%
   slice_max(tf_idf, n = 10) %>%
